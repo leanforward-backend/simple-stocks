@@ -5,11 +5,13 @@ import { ThemeProvider } from "@/components/theme-provider";
 
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://chat.vercel.ai"),
   title: "Simple Stocks",
-  description: "Visualize and analyze stock data, and talk to a personalised AI",
+  description:
+    "Visualize and analyze stock data, and talk to a personalised AI",
 };
 
 export const viewport = {
@@ -78,8 +80,10 @@ export default function RootLayout({
           disableTransitionOnChange
           enableSystem
         >
-          <Toaster position="top-center" />
-          <SessionProvider>{children}</SessionProvider>
+          <TooltipProvider>
+            <Toaster position="top-center" />
+            <SessionProvider>{children}</SessionProvider>
+          </TooltipProvider>
         </ThemeProvider>
       </body>
     </html>

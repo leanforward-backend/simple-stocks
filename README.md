@@ -68,3 +68,15 @@ pnpm dev
 ```
 
 Your app template should now be running on [localhost:3000](http://localhost:3000).
+
+
+
+
+--------------My Writeout--------------
+
+
+I want to
+
+
+first problem I want to takle is map itself, 
+
