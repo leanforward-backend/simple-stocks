@@ -47,6 +47,10 @@ export const config = {
     "/api/:path*",
     "/login",
     "/register",
+    "/world",
+    "/home",
+    "/graphs",
+    "/contact",
 
     /*
      * Match all request paths except for the ones starting with:

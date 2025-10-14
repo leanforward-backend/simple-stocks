@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
 import { Chat } from "@/components/chat";
 import { DataStreamHandler } from "@/components/data-stream-handler";
+import { Navbar } from "@/components/navbar";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 import { getChatById, getMessagesByChatId } from "@/lib/db/queries";
 import { convertToUIMessages } from "@/lib/utils";
@@ -45,6 +46,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
   if (!chatModelFromCookie) {
     return (
       <>
+        <Navbar />
         <Chat
           autoResume={true}
           id={chat.id}
@@ -61,6 +63,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
 
   return (
     <>
+      <Navbar />
       <Chat
         autoResume={true}
         id={chat.id}
