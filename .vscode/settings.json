@@ -24,6 +24,7 @@
   "[graphql]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
+  "workbench.externalBrowser": "brave",
   "typescript.tsdk": "node_modules/typescript/lib",
   "editor.formatOnSave": true,
   "editor.formatOnPaste": true,
