@@ -1,6 +1,12 @@
 "use client";
 
-import { ChartColumn, CircleUserRound, Earth, Sparkles } from "lucide-react";
+import {
+  ChartColumn,
+  CircleUserRound,
+  DollarSign,
+  Earth,
+  Sparkles,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -12,6 +18,7 @@ const navItems = [
   { name: "World of Stocks", href: "world", icon: <Earth size={20} /> },
   { name: "AI Chat", href: "/", icon: <Sparkles size={20} /> },
   { name: "Analytics", href: "graphs", icon: <ChartColumn size={20} /> },
+  { name: "Money", href: "money", icon: <DollarSign size={20} /> },
   {
     name: "Contact",
     href: "#https://www.linkedin.com/in/toby-crust-a6a2a2245/",
