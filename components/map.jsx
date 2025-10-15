@@ -6,10 +6,9 @@ import { Tooltip } from "react-tooltip";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
-// API key from https://www.alphavantage.co/support/#api-key
-const API_KEY = "CGW23NEDJEYTE2O1";
+const API_KEY = "96dT7rbunW5ddozz10K564TXdtZSpGZ4";
 
-// Symbol format (no .INDX needed)
+// Using major index symbols that work with free tier
 const COUNTRY_INDICES = {
   "United States": { symbol: "SPY", name: "S&P 500 (SPY ETF)" },
   Germany: { symbol: "EWG", name: "Germany (iShares MSCI Germany ETF)" },
@@ -25,7 +24,6 @@ const COUNTRY_INDICES = {
 
 export const MapComponent = () => {
   const [marketData, setMarketData] = useState({});
-  const [selectedYear, setSelectedYear] = useState(2023);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [progress, setProgress] = useState({ current: 0, total: 0 });
@@ -37,83 +35,131 @@ export const MapComponent = () => {
     const countries = Object.entries(COUNTRY_INDICES);
     setProgress({ current: 0, total: countries.length });
 
+    console.log("=== Starting FMP API Data Fetch (Free Tier) ===");
+    console.log(`Total markets to fetch: ${countries.length}`);
+    console.log("✓ Using /quote endpoint - available on free tier");
+
     for (let i = 0; i < countries.length; i++) {
       const [country, index] = countries[i];
 
       try {
         setProgress({ current: i + 1, total: countries.length });
-
-        // Fetch URL
-        const response = await fetch(
-          `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${index.symbol}&outputsize=full&apikey=${API_KEY}`
+        console.log(
+          `\n[${i + 1}/${countries.length}] Fetching ${country} (${index.symbol})...`
         );
 
+        // Use the quote endpoint which is available on free tier
+        // This provides current price and day's change
+        const url = `https://financialmodelingprep.com/api/v3/quote/${index.symbol}?apikey=${API_KEY}`;
+
+        console.log(`Trying URL: ${url}`);
+
+        const response = await fetch(url);
         const apiData = await response.json();
 
-        // Log the full response for debugging
-        console.log(`Response for ${country}:`, apiData);
+        console.log(
+          `Raw Response for ${country}:`,
+          JSON.stringify(apiData, null, 2)
+        );
 
-        const timeSeries = apiData["Time Series (Daily)"];
-
-        if (!timeSeries) {
+        // Check if we got an error message
+        if (apiData["Error Message"] || apiData.error) {
           console.error(
-            `API error for ${country}:`,
-            apiData.Note ||
-              apiData["Error Message"] ||
-              apiData.Information ||
-              "Unknown error"
+            `❌ API error for ${country}:`,
+            apiData["Error Message"] || apiData.error
           );
           continue;
         }
 
-        // Convert object to array and filter by year
-        const yearData = Object.entries(timeSeries)
-          .filter(([date]) => date.startsWith(selectedYear.toString()))
-          .map(([date, values]) => ({
-            date,
-            close: values["4. close"],
-          }))
-          .sort((a, b) => new Date(a.date) - new Date(b.date));
+        // Quote endpoint returns an array with one object
+        if (Array.isArray(apiData) && apiData.length > 0) {
+          const quoteData = apiData[0];
+          
+          console.log(`✓ Received data for ${country}`);
+          console.log(`  Price: $${quoteData.price}`);
+          console.log(`  Change: ${quoteData.change} (${quoteData.changesPercentage}%)`);
+          console.log(`  Day Range: $${quoteData.dayLow} - $${quoteData.dayHigh}`);
+          console.log(`  52W Range: $${quoteData.yearLow} - $${quoteData.yearHigh}`);
 
-        if (yearData.length < 2) {
-          console.warn(`Insufficient data for ${country} in ${selectedYear}`);
+          // Calculate year-to-date performance using yearLow and current price
+          const ytdPerformance = quoteData.yearHigh && quoteData.yearLow
+            ? ((quoteData.price - quoteData.yearLow) / quoteData.yearLow) * 100
+            : 0;
+
+          // Create performance metrics from available data
+          const performanceMetrics = [
+            {
+              symbol: `Today's Change`,
+              name: "Daily Performance",
+              change: quoteData.changesPercentage?.toFixed(2) || "0",
+            },
+            {
+              symbol: `52W High Performance`,
+              name: "Vs 52W High",
+              change: quoteData.yearHigh
+                ? (((quoteData.price - quoteData.yearHigh) / quoteData.yearHigh) * 100).toFixed(2)
+                : "0",
+            },
+            {
+              symbol: `52W Low Performance`,
+              name: "Vs 52W Low",
+              change: quoteData.yearLow
+                ? (((quoteData.price - quoteData.yearLow) / quoteData.yearLow) * 100).toFixed(2)
+                : "0",
+            },
+            {
+              symbol: `Market Cap`,
+              name: "Market Cap",
+              change: quoteData.marketCap
+                ? `${(quoteData.marketCap / 1e9).toFixed(2)}B`
+                : "N/A",
+            },
+            {
+              symbol: `Volume`,
+              name: "Volume",
+              change: quoteData.volume
+                ? `${(quoteData.volume / 1e6).toFixed(2)}M`
+                : "N/A",
+            },
+          ];
+
+          data[country] = {
+            indexName: index.name,
+            yearlyPerformance: quoteData.changesPercentage?.toFixed(2) || "0",
+            ytdPerformance: ytdPerformance.toFixed(2),
+            currentPrice: quoteData.price?.toFixed(2) || "0",
+            topStocks: performanceMetrics,
+          };
+
+          console.log(`✅ ${country}: ${quoteData.changesPercentage?.toFixed(2)}% (Daily)`);
+        } else {
+          console.error(`❌ Unexpected response format for ${country}`);
           continue;
         }
 
-        const startPrice = Number.parseFloat(yearData[0].close);
-        const endPrice = Number.parseFloat(yearData.at(-1).close);
-        const yearlyPerformance = ((endPrice - startPrice) / startPrice) * 100;
-
-        // Calculate monthly returns (same logic as before)
-        const monthlyReturns = [];
-        for (let j = 1; j < Math.min(yearData.length, 6); j++) {
-          const prevPrice = Number.parseFloat(yearData[j - 1].close);
-          const currPrice = Number.parseFloat(yearData[j].close);
-          const monthReturn = ((currPrice - prevPrice) / prevPrice) * 100;
-          monthlyReturns.push({
-            symbol: `${index.name} ${yearData[j].date.substring(5, 7)}/${selectedYear}`,
-            name: `Month ${j}`,
-            change: monthReturn.toFixed(2),
-          });
+        // Rate limiting: free tier allows 5 calls per minute
+        if (i < countries.length - 1) {
+          console.log("Waiting 12 seconds for rate limit (free tier: 5 calls/min)...");
+          await new Promise((resolve) => setTimeout(resolve, 12000));
         }
-
-        // Add delay to respect rate limits (5 calls/min)
-        await new Promise((resolve) => setTimeout(resolve, 12_000)); // 12 seconds between calls
-
-        monthlyReturns.sort(
-          (a, b) => Number.parseFloat(b.change) - Number.parseFloat(a.change)
-        );
-
-        data[country] = {
-          indexName: index.name,
-          yearlyPerformance: yearlyPerformance.toFixed(2),
-          topStocks: monthlyReturns.slice(0, 5),
-        };
-
-        console.log(`✓ ${country}: ${yearlyPerformance.toFixed(2)}%`);
       } catch (error) {
-        console.error(`Error fetching data for ${country}:`, error);
+        console.error(`❌ Error fetching data for ${country}:`, error);
+        console.error("Error details:", error.message);
       }
+    }
+
+    console.log("\n=== Final Market Data ===");
+    console.log(JSON.stringify(data, null, 2));
+    console.log(`\nSuccessfully loaded ${Object.keys(data).length} markets`);
+
+    if (Object.keys(data).length === 0) {
+      setError(
+        "⚠️ Unable to fetch data. Possible reasons:\n" +
+        "• Free tier daily limit (250 calls) reached\n" +
+        "• API key may need activation (check FMP dashboard)\n" +
+        "• Network connectivity issues\n\n" +
+        "Try again later or check your API key status."
+      );
     }
 
     setMarketData(data);
@@ -137,12 +183,13 @@ export const MapComponent = () => {
     const perfSign = Number.parseFloat(data.yearlyPerformance) >= 0 ? "+" : "";
 
     let content = `📊 ${countryName} - ${data.indexName}\n`;
-    content += `\n${selectedYear} Performance: ${perfColor} ${perfSign}${data.yearlyPerformance}%\n`;
-    content += "\n📈 Best Monthly Returns:\n";
+    content += `\nCurrent Price: $${data.currentPrice}\n`;
+    content += `Today's Performance: ${perfColor} ${perfSign}${data.yearlyPerformance}%\n`;
+    content += `YTD from 52W Low: ${perfSign}${data.ytdPerformance}%\n`;
+    content += "\n📈 Market Metrics:\n";
 
-    data.topStocks.forEach((stock, idx) => {
-      const icon = Number.parseFloat(stock.change) >= 0 ? "📈" : "📉";
-      content += `${idx + 1}. ${stock.symbol}: ${icon} ${stock.change}%\n`;
+    data.topStocks.forEach((metric, idx) => {
+      content += `${idx + 1}. ${metric.name}: ${metric.change}\n`;
     });
 
     return content;
@@ -164,6 +211,9 @@ export const MapComponent = () => {
               }}
             />
           </div>
+          <p className="mt-2 text-gray-500 text-sm">
+            Using free tier endpoints (12s delay between calls)
+          </p>
         </div>
       </div>
     );
@@ -179,13 +229,13 @@ export const MapComponent = () => {
             </h1>
             <p className="mt-1 text-gray-600">
               Hover over countries • {Object.keys(marketData).length} markets
-              loaded
+              loaded • Live data
             </p>
           </div>
         </div>
 
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 p-4 text-red-700">
+          <div className="mb-4 rounded-lg bg-red-50 p-4 text-red-700 whitespace-pre-line">
             {error}
           </div>
         )}
@@ -199,7 +249,7 @@ export const MapComponent = () => {
               </div>
             </div>
             <div className="rounded bg-blue-50 p-3">
-              <div className="text-gray-600 text-sm">Avg Performance</div>
+              <div className="text-gray-600 text-sm">Avg Daily Change</div>
               <div className="font-bold text-2xl text-blue-600">
                 {Object.values(marketData).length > 0
                   ? (
@@ -244,10 +294,11 @@ export const MapComponent = () => {
 
                   let fillColor = "#D1D5DB";
                   if (hasData) {
-                    if (performance > 15) fillColor = "#10B981";
-                    else if (performance > 5) fillColor = "#34D399";
+                    // Using daily performance for coloring
+                    if (performance > 2) fillColor = "#10B981";
+                    else if (performance > 0.5) fillColor = "#34D399";
                     else if (performance > 0) fillColor = "#6EE7B7";
-                    else if (performance > -5) fillColor = "#FCA5A5";
+                    else if (performance > -0.5) fillColor = "#FCA5A5";
                     else fillColor = "#EF4444";
                   }
 
@@ -287,27 +338,27 @@ export const MapComponent = () => {
         </div>
 
         <div className="rounded-lg bg-white p-4 shadow">
-          <h3 className="mb-2 font-bold text-gray-800">Legend</h3>
+          <h3 className="mb-2 font-bold text-gray-800">Legend (Daily Performance)</h3>
           <div className="flex flex-wrap gap-4 text-sm">
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 rounded bg-green-500" />
-              <span>&gt;15%</span>
+              <span>&gt;2%</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 rounded bg-green-300" />
-              <span>5-15%</span>
+              <span>0.5-2%</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 rounded bg-green-200" />
-              <span>0-5%</span>
+              <span>0-0.5%</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 rounded bg-red-300" />
-              <span>-5-0%</span>
+              <span>-0.5-0%</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 rounded bg-red-500" />
-              <span>&lt;-5%</span>
+              <span>&lt;-0.5%</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 rounded bg-gray-300" />
