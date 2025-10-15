@@ -1,11 +1,11 @@
-import MapComponent from "@/components/map";
 import { Navbar } from "@/components/navbar";
 
 export default function Page() {
   return (
-    <div className="h-full w-full bg-background">
+    <div>
       <Navbar />
-      <MapComponent />
+      Calculate how much money you would have made over a given time period if
+      you had invested.
     </div>
   );
 }

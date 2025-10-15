@@ -51,6 +51,7 @@ export const config = {
     "/home",
     "/graphs",
     "/contact",
+    "/money",
 
     /*
      * Match all request paths except for the ones starting with:
