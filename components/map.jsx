@@ -74,17 +74,25 @@ export const MapComponent = () => {
         // Quote endpoint returns an array with one object
         if (Array.isArray(apiData) && apiData.length > 0) {
           const quoteData = apiData[0];
-          
+
           console.log(`✓ Received data for ${country}`);
           console.log(`  Price: $${quoteData.price}`);
-          console.log(`  Change: ${quoteData.change} (${quoteData.changesPercentage}%)`);
-          console.log(`  Day Range: $${quoteData.dayLow} - $${quoteData.dayHigh}`);
-          console.log(`  52W Range: $${quoteData.yearLow} - $${quoteData.yearHigh}`);
+          console.log(
+            `  Change: ${quoteData.change} (${quoteData.changesPercentage}%)`
+          );
+          console.log(
+            `  Day Range: $${quoteData.dayLow} - $${quoteData.dayHigh}`
+          );
+          console.log(
+            `  52W Range: $${quoteData.yearLow} - $${quoteData.yearHigh}`
+          );
 
           // Calculate year-to-date performance using yearLow and current price
-          const ytdPerformance = quoteData.yearHigh && quoteData.yearLow
-            ? ((quoteData.price - quoteData.yearLow) / quoteData.yearLow) * 100
-            : 0;
+          const ytdPerformance =
+            quoteData.yearHigh && quoteData.yearLow
+              ? ((quoteData.price - quoteData.yearLow) / quoteData.yearLow) *
+                100
+              : 0;
 
           // Create performance metrics from available data
           const performanceMetrics = [
@@ -94,28 +102,36 @@ export const MapComponent = () => {
               change: quoteData.changesPercentage?.toFixed(2) || "0",
             },
             {
-              symbol: `52W High Performance`,
+              symbol: "52W High Performance",
               name: "Vs 52W High",
               change: quoteData.yearHigh
-                ? (((quoteData.price - quoteData.yearHigh) / quoteData.yearHigh) * 100).toFixed(2)
+                ? (
+                    ((quoteData.price - quoteData.yearHigh) /
+                      quoteData.yearHigh) *
+                    100
+                  ).toFixed(2)
                 : "0",
             },
             {
-              symbol: `52W Low Performance`,
+              symbol: "52W Low Performance",
               name: "Vs 52W Low",
               change: quoteData.yearLow
-                ? (((quoteData.price - quoteData.yearLow) / quoteData.yearLow) * 100).toFixed(2)
+                ? (
+                    ((quoteData.price - quoteData.yearLow) /
+                      quoteData.yearLow) *
+                    100
+                  ).toFixed(2)
                 : "0",
             },
             {
-              symbol: `Market Cap`,
+              symbol: "Market Cap",
               name: "Market Cap",
               change: quoteData.marketCap
                 ? `${(quoteData.marketCap / 1e9).toFixed(2)}B`
                 : "N/A",
             },
             {
-              symbol: `Volume`,
+              symbol: "Volume",
               name: "Volume",
               change: quoteData.volume
                 ? `${(quoteData.volume / 1e6).toFixed(2)}M`
@@ -131,7 +147,9 @@ export const MapComponent = () => {
             topStocks: performanceMetrics,
           };
 
-          console.log(`✅ ${country}: ${quoteData.changesPercentage?.toFixed(2)}% (Daily)`);
+          console.log(
+            `✅ ${country}: ${quoteData.changesPercentage?.toFixed(2)}% (Daily)`
+          );
         } else {
           console.error(`❌ Unexpected response format for ${country}`);
           continue;
@@ -139,8 +157,10 @@ export const MapComponent = () => {
 
         // Rate limiting: free tier allows 5 calls per minute
         if (i < countries.length - 1) {
-          console.log("Waiting 12 seconds for rate limit (free tier: 5 calls/min)...");
-          await new Promise((resolve) => setTimeout(resolve, 12000));
+          console.log(
+            "Waiting 12 seconds for rate limit (free tier: 5 calls/min)..."
+          );
+          await new Promise((resolve) => setTimeout(resolve, 12_000));
         }
       } catch (error) {
         console.error(`❌ Error fetching data for ${country}:`, error);
@@ -155,10 +175,10 @@ export const MapComponent = () => {
     if (Object.keys(data).length === 0) {
       setError(
         "⚠️ Unable to fetch data. Possible reasons:\n" +
-        "• Free tier daily limit (250 calls) reached\n" +
-        "• API key may need activation (check FMP dashboard)\n" +
-        "• Network connectivity issues\n\n" +
-        "Try again later or check your API key status."
+          "• Free tier daily limit (250 calls) reached\n" +
+          "• API key may need activation (check FMP dashboard)\n" +
+          "• Network connectivity issues\n\n" +
+          "Try again later or check your API key status."
       );
     }
 
@@ -235,7 +255,7 @@ export const MapComponent = () => {
         </div>
 
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 p-4 text-red-700 whitespace-pre-line">
+          <div className="mb-4 whitespace-pre-line rounded-lg bg-red-50 p-4 text-red-700">
             {error}
           </div>
         )}
@@ -338,7 +358,9 @@ export const MapComponent = () => {
         </div>
 
         <div className="rounded-lg bg-white p-4 shadow">
-          <h3 className="mb-2 font-bold text-gray-800">Legend (Daily Performance)</h3>
+          <h3 className="mb-2 font-bold text-gray-800">
+            Legend (Daily Performance)
+          </h3>
           <div className="flex flex-wrap gap-4 text-sm">
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 rounded bg-green-500" />
