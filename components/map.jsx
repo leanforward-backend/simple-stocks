@@ -1,10 +1,10 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { Tooltip } from "react-tooltip";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
@@ -265,10 +265,8 @@ export default function MapComponent() {
 
   const handleApiSubmit = (e) => {
     e.preventDefault();
-    if (apiKey.trim()) {
-      setShowApiInput(false);
-      fetchMarketData(apiKey);
-    }
+    setShowApiInput(false);
+    fetchMarketData(apiKey);
   };
 
   const handleMouseEnter = (geo) => {
